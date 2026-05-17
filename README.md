@@ -5,6 +5,7 @@ Implementasi SPK menggunakan Metode SMART dengan Python
 
 Silakan buat folder baru bernama smart_web_dss di komputer Anda, lalu susun direktorinya di VSCode seperti ini:
 
+```text
 smart_web_dss/
 ├── core/
 │   ├── __init__.py
@@ -19,6 +20,7 @@ smart_web_dss/
 │   └── smart_dss.db       # Database SQLite (Otomatis Terbuat)
 ├── app.py                 # Routing Server Utama (Flask)
 └── requirements.txt       # Library yang Dibutuhkan
+```
 
 **Langkah 2: Mengonfigurasi Library (requirements.txt)**
 
