@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-4">
+    <a href="/project/{{ project.id }}" class="btn btn-sm btn-outline-secondary shadow-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Kembali ke Matriks Data
+    </a>
+    <h3 class="mt-3 text-dark fw-bold">
+        <i class="fa-solid fa-chart-column text-primary me-2"></i>Hasil Perangkingan SMART: {{ project.name }}
+    </h3>
+</div>
+
+<ul class="nav nav-pills mb-4 p-2 bg-white rounded shadow-sm border" id="smartResultTabs" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#rankTab">🏆 1. Rekomendasi & Sensitivitas</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#perfTab">📋 2. Matriks Awal</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#weightTab">⚖️ 3. Normalisasi Bobot</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#utilityTab">📐 4. Nilai Utilitas</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#aggTab">🧮 5. Matriks Agregasi</button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    
+    <div class="tab-pane fade show active" id="rankTab">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card p-4 h-100 border-0 shadow-sm rounded-4">
+                    <h5 class="text-primary fw-bold mb-4">
+                        <i class="fa-solid fa-trophy me-2"></i>Tabel Rekomendasi Urutan
+                    </h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle border-bottom">
+                            <thead>
+                                <tr>
+                                    <th class="text-center border-0 border-bottom" style="width: 20%;">Peringkat</th>
+                                    <th class="border-0 border-bottom">Nama Alternatif</th>
+                                    <th class="text-center border-0 border-bottom" style="width: 40%;">Skor Akhir $V(a_i)$</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for idx in res['ranking_indices'] %}
+                                <tr class="{% if loop.first %}table-success{% endif %}">
+                                    <td class="text-center fw-bold">
+                                        {% if loop.first %}
+                                            <i class="fa-solid fa-medal text-warning fs-5 me-1"></i> 1
+                                        {% else %}
+                                            <span class="text-muted">{{ loop.index }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-bold text-dark">{{ data['alternatives'][idx] }}</td>
+                                    <td class="text-center fw-bold text-primary">
+                                        {{ "%.4f"|format(res['final_scores'][idx]) }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-info mt-3 border-0 shadow-sm" style="background-color: #e0f7fa; color: #006064;">
+                        <i class="fa-solid fa-circle-info me-2"></i>
+                        <strong>Alternatif Terbaik:</strong> {{ res['ranked_alternatives'][0] }} dipilih berdasarkan perolehan nilai agregat utilitas linear tertinggi.
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-4">
+                <div class="card p-4 h-100 border-0 shadow-sm rounded-4">
+                    <h5 class="text-danger fw-bold mb-3">
+                        <i class="fa-solid fa-chart-line me-2"></i>Analisis Kestabilan / Sensitivitas (OAT)
+                    </h5>
+                    <p class="text-muted small mb-4">
+                        Grafik simulasi kestabilan keputusan saat bobot kepentingan kriteria pertama divariasikan dari 0.0 hingga 1.0 secara proporsional.
+                    </p>
+                    <div class="text-center">
+                        <img src="data:image/png;base64,{{ chart }}" class="img-fluid rounded border shadow-sm" alt="Grafik Sensitivitas">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="perfTab">
+        <div class="card p-4 border-0 shadow-sm rounded-4">
+            <h5 class="text-dark fw-bold border-bottom pb-2 mb-3">Matriks Keputusan Awal ($X_{m \times n}$)</h5>
+            <div class="table-responsive mt-2">
+                <table class="table table-hover table-bordered text-center align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="align-middle fw-bold" style="width: 20%;">Alternatif \ Kriteria</th>
+                            {% for c in data['criteria'] %}
+                            <th class="align-middle">
+                                <span class="d-block fw-bold text-dark mb-1">{{ c }}</span>
+                                {% if data['types'][loop.index0] == 'benefit' %}
+                                    <span class="badge rounded-pill bg-success px-3">BENEFIT</span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-danger px-3">COST</span>
+                                {% endif %}
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alt in data['alternatives'] %}{% set r_idx = loop.index0 %}
+                        <tr>
+                            <td class="fw-bold text-start ps-3">{{ alt }}</td>
+                            {% for c in data['criteria'] %}
+                            <td class="fw-medium text-secondary">{{ data['performance'][r_idx][loop.index0] }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="weightTab">
+        <div class="card p-4 border-0 shadow-sm rounded-4">
+            <h5 class="text-dark fw-bold border-bottom pb-2 mb-3">Transparansi Normalisasi Bobot Kriteria ($w_j$)</h5>
+            <div class="alert alert-info py-2 shadow-sm border-0 border-start border-info border-4">
+                <i class="fa-solid fa-info-circle me-2"></i>Metode Elicitasi Aktif: <strong class="text-uppercase">{{ data.get('weight_method', 'direct') }}</strong>
+            </div>
+            <div class="table-responsive mt-3">
+                <table class="table table-hover table-bordered text-center align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="fw-bold">Kriteria Keputusan</th>
+                            <th class="fw-bold">Karakteristik Tipe</th>
+                            <th class="fw-bold">Input (Nilai/Peringkat)</th>
+                            <th class="table-primary fw-bold">Bobot Ternormalisasi ($w_j$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in data['criteria'] %}
+                        <tr>
+                            <td class="fw-bold text-start ps-3">{{ c }}</td>
+                            <td class="text-uppercase fw-medium text-secondary">{{ data['types'][loop.index0] }}</td>
+                            <td class="fw-medium">{{ data['weights'][loop.index0] }}</td>
+                            <td class="text-success fw-bold fs-6">{{ "%.4f"|format(res['normalized_weights'][loop.index0]) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="utilityTab">
+        <div class="card p-4 border-0 shadow-sm rounded-4">
+            <h5 class="text-dark fw-bold border-bottom pb-2 mb-3">Hasil Matriks Nilai Utilitas Linear ($u_{ij} \in [0,1]$)</h5>
+            <div class="table-responsive mt-2">
+                <table class="table table-hover table-bordered text-center align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="fw-bold text-start ps-3" style="width: 20%;">Alternatif \ Kriteria</th>
+                            {% for c in data['criteria'] %}
+                            <th class="fw-bold">{{ c }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alt in data['alternatives'] %}{% set r_idx = loop.index0 %}
+                        <tr>
+                            <td class="fw-bold text-start ps-3">{{ alt }}</td>
+                            {% for c in data['criteria'] %}
+                            <td class="fw-medium text-secondary">{{ "%.4f"|format(res['utility_matrix'][r_idx][loop.index0]) }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="aggTab">
+        <div class="card p-4 border-0 shadow-sm rounded-4">
+            <h5 class="text-dark fw-bold border-bottom pb-2 mb-3">Matriks Agregasi Perkalian Bobot ($w_j \cdot u_{ij}$)</h5>
+            <div class="table-responsive mt-2">
+                <table class="table table-hover table-bordered text-center align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="fw-bold text-start ps-3" style="width: 20%;">Alternatif</th>
+                            {% for c in data['criteria'] %}
+                            <th class="fw-bold text-muted">{{ c }}</th>
+                            {% endfor %}
+                            <th class="table-success fw-bold text-success border-success" style="width: 15%;">Total Skor $V(a_i)$</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alt in data['alternatives'] %}{% set r_idx = loop.index0 %}
+                        <tr>
+                            <td class="fw-bold text-start ps-3">{{ alt }}</td>
+                            {% for c in data['criteria'] %}
+                            <td class="fw-medium text-secondary">{{ "%.4f"|format(res['aggregation_matrix'][r_idx][loop.index0]) }}</td>
+                            {% endfor %}
+                            <td class="table-success fw-bold text-success fs-5 border-success">{{ "%.4f"|format(res['final_scores'][r_idx]) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        svg: {
+            fontCache: 'global'
+        }
+    };
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}

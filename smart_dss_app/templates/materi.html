@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="/" class="btn btn-sm btn-link text-decoration-none text-muted mb-2"><i class="fa-solid fa-chevron-left me-1"></i> Kembali ke Dashboard</a>
+        <h3 class="mt-2 text-dark"><i class="fa-solid fa-graduation-cap text-info me-2"></i>Materi & Formula Metode SMART</h3>
+    </div>
+</div>
+
+<div class="card p-5 border-0 shadow-sm bg-white text-dark mb-4">
+    
+    <section class="mb-5">
+        <h5 class="text-primary fw-bold border-bottom pb-2">1. Landasan Multi-Attribute Utility Theory (MAUT)</h5>
+        <p>Berdasarkan rumusan dasar teori utilitas multi-atribut, preferensi skor total $V(a_i)$ dari sebuah alternatif dihitung menggunakan agregasi perkalian antara bobot kriteria dan nilai utilitasnya:</p>
+        <div class="p-4 bg-light rounded text-center my-3 fs-5 shadow-sm border">
+            $$V(a_i) = \sum_{j=1}^{n} w_j \cdot u_j(x_{ij})$$
+        </div>
+        <div class="alert alert-info py-2">
+            <strong>Contoh Implementasi:</strong> Jika Vendor A memiliki utilitas Biaya 0.435 (bobot 0.171) dan utilitas Fitur 1.0 (bobot 0.257), maka skor agregat sementaranya adalah: $(0.171 \times 0.435) + (0.257 \times 1.0) = 0.074 + 0.257 = 0.331$.
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <h5 class="text-primary fw-bold border-bottom pb-2">2. Transformasi Utilitas Linear Skala $[0,1]$</h5>
+        <p>Nilai asli performa harus dinormalisasi menjadi rentang 0 (terburuk) hingga 1 (terbaik). Caranya berbeda tergantung sifat kriteria:</p>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div class="card bg-light border p-3 h-100">
+                    <h6 class="fw-bold text-success"><i class="fa-solid fa-arrow-trend-up me-1"></i>Kriteria Benefit (Keuntungan)</h6>
+                    <p class="text-muted small">Makin besar nilai asli, makin baik.</p>
+                    $$u_{ij} = \frac{x_{ij} - x_{j}^{\min}}{x_{j}^{\max} - x_{j}^{\min}}$$
+                    <hr>
+                    <p class="small mb-0"><strong>Contoh (Kemudahan Penggunaan):</strong><br>
+                    Min = 6, Max = 9. Jika skor Vendor A = 8.<br>
+                    $u = \frac{8 - 6}{9 - 6} = \frac{2}{3} = \mathbf{0.667}$</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-light border p-3 h-100">
+                    <h6 class="fw-bold text-danger"><i class="fa-solid fa-arrow-trend-down me-1"></i>Kriteria Cost (Biaya)</h6>
+                    <p class="text-muted small">Makin kecil nilai asli, makin baik.</p>
+                    $$u_{ij} = \frac{x_{j}^{\max} - x_{ij}}{x_{j}^{\max} - x_{j}^{\min}}$$
+                    <hr>
+                    <p class="small mb-0"><strong>Contoh (Harga/Biaya):</strong><br>
+                    Min = 120, Max = 350. Jika Harga Vendor A = 250.<br>
+                    $u = \frac{350 - 250}{350 - 120} = \frac{100}{230} = \mathbf{0.435}$</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <h5 class="text-primary fw-bold border-bottom pb-2">3. Metode Elicitasi & Normalisasi Bobot Kriteria ($w_j$)</h5>
+        <ul class="list-group list-group-flush mt-3">
+            <li class="list-group-item">
+                <strong class="text-dark">Direct Rating / Swing Weighting</strong><br>
+                Membagi input skala nilai dengan total nilai seluruh kriteria $\sum w_j = 1$.
+                <div class="text-center my-2">$$w_j = \frac{R_j}{\sum_{k=1}^{n} R_k}$$</div>
+                <div class="alert alert-secondary py-2 small mb-0">
+                    <strong>Contoh:</strong> Pengambil keputusan memberi rating {Biaya: 60, Fitur: 90}. Total = 150.<br>
+                    Bobot Biaya = $\frac{60}{150} = \mathbf{0.40}$, Bobot Fitur = $\frac{90}{150} = \mathbf{0.60}$.
+                </div>
+            </li>
+            <li class="list-group-item mt-3">
+                <strong class="text-dark">Rank Order Centroid (ROC)</strong><br>
+                Mengubah peringkat kepentingan ($k=1$ paling penting) menjadi bobot non-linear.
+                <div class="text-center my-2">$$w_k = \frac{1}{n} \sum_{j=k}^{n} \frac{1}{j}$$</div>
+                <div class="alert alert-secondary py-2 small mb-0">
+                    <strong>Contoh (Jika ada 3 kriteria, $n=3$):</strong><br>
+                    Peringkat 1 ($k=1$): $w_1 = \frac{1}{3} \times (\frac{1}{1} + \frac{1}{2} + \frac{1}{3}) = \mathbf{0.611}$<br>
+                    Peringkat 2 ($k=2$): $w_2 = \frac{1}{3} \times (\frac{1}{2} + \frac{1}{3}) = \mathbf{0.278}$<br>
+                    Peringkat 3 ($k=3$): $w_3 = \frac{1}{3} \times (\frac{1}{3}) = \mathbf{0.111}$
+                </div>
+            </li>
+        </ul>
+    </section>
+
+    <section class="mb-4">
+        <h5 class="text-primary fw-bold border-bottom pb-2">4. Analisis Sensitivitas OAT (One-At-a-Time)</h5>
+        <p>Digunakan untuk menguji kekuatan (<em>robustness</em>) keputusan. Ketika bobot kriteria utama ($k$) diubah paksa ($w_k^{new}$), bobot kriteria lainnya ($j \neq k$) harus diredistribusikan proporsional menggunakan formula:</p>
+        <div class="p-4 bg-light rounded text-center my-3 fs-5 shadow-sm border">
+            $$w_j^{new} = w_j^{base} \cdot \frac{1 - w_k^{new}}{1 - w_k^{base}}$$
+        </div>
+        <div class="alert alert-warning py-2 mb-0">
+            <strong>Contoh Implementasi:</strong><br>
+            Awalnya bobot Biaya ($w_k^{base}$) = 0.171 dan bobot Fitur ($w_j^{base}$) = 0.257.<br>
+            Jika dalam simulasi sensitivitas kita menaikkan bobot Biaya secara radikal menjadi 53% ($w_k^{new} = 0.530$), berapakah bobot Fitur yang baru?<br>
+            $w_j^{new} = 0.257 \times \frac{1 - 0.530}{1 - 0.171} = 0.257 \times \frac{0.470}{0.829} = 0.257 \times 0.567 = \mathbf{0.145}$<br>
+            <em>(Porsi bobot fitur otomatis mengecil karena porsi biaya dibesarkan, namun rasio kepentingannya terhadap kriteria lain tetap stabil).</em>
+        </div>
+    </section>
+</div>
+
+<script>
+    MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        svg: {
+            fontCache: 'global'
+        }
+    };
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}

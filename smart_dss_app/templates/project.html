@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="/" class="btn btn-sm btn-link text-decoration-none text-muted mb-2"><i class="fa-solid fa-chevron-left me-1"></i> Kembali ke Dashboard</a>
+        <h3><i class="fa-solid fa-sliders text-success me-2"></i>Konfigurasi Matriks: {{ project.name }}</h3>
+    </div>
+    <div>
+        <a href="/project/{{ project.id }}/calculate" class="btn btn-lg btn-success shadow-sm"><i class="fa-solid fa-calculator me-1"></i> Hitung Hasil SMART</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card p-3 bg-white border-0 shadow-sm">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <form action="/project/{{ project.id }}/upload" method="POST" enctype="multipart/form-data" class="d-flex gap-2">
+                        <input type="file" name="file" class="form-control" accept=".csv, .xlsx" required>
+                        <button type="submit" class="btn btn-info text-white text-nowrap"><i class="fa-solid fa-file-import me-1"></i> Impor CSV/Excel</button>
+                    </form>
+                </div>
+                <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                    <a href="/project/{{ project.id }}/export" class="btn btn-outline-secondary"><i class="fa-solid fa-file-export me-1"></i> Ekspor Template (.xlsx)</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form action="/project/{{ project.id }}/update" method="POST" class="col-12">
+        <div class="card p-4 mb-4 border-0 shadow-sm">
+            
+            <div class="mb-4 col-md-4">
+                <label class="form-label fw-bold text-dark"><i class="fa-solid fa-scale-balanced me-1"></i> Skenario Metode Pembobotan</label>
+                <select name="weight_method" id="weightMethodSelect" class="form-select bg-light border-primary text-dark fw-medium shadow-sm" onchange="handleWeightMethodChange()">
+                    <option value="direct" {% if data.get('weight_method', 'direct') == 'direct' %}selected{% endif %}>Direct Rating (Skala Bebas)</option>
+                    <option value="swing" {% if data.get('weight_method', 'direct') == 'swing' %}selected{% endif %}>Swing Weighting (Skala Rentang)</option>
+                    <option value="roc" {% if data.get('weight_method', 'direct') == 'roc' %}selected{% endif %}>Rank Order Centroid (ROC - Peringkat)</option>
+                    <option value="equal" {% if data.get('weight_method', 'direct') == 'equal' %}selected{% endif %}>Equal Weight (Bobot Merata)</option>
+                </select>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-dark fw-bold m-0"><i class="fa-solid fa-table me-2"></i>Matriks Kriteria & Performa</h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="addCriterion()">
+                        <i class="fa-solid fa-plus"></i> Tambah Kriteria
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addAlternative()">
+                        <i class="fa-solid fa-plus"></i> Tambah Alternatif
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="bg-white" style="border-bottom: 2px solid #dee2e6;">
+                        <tr id="headerRow">
+                            <th style="min-width: 180px;" class="text-dark text-center align-middle fw-bold">Alternatif \ Kriteria</th>
+                            
+                            {% for c in data['criteria'] %}
+                            <th class="position-relative pt-4">
+                                <button type="button" class="btn btn-sm text-danger position-absolute top-0 end-0 p-1" onclick="deleteCriterion(this)"><i class="fa-solid fa-trash-can"></i></button>
+                                <input type="text" name="criteria[]" value="{{ c }}" class="form-control form-control-sm text-center fw-bold mb-1" required>
+                                <select name="types[]" class="form-select form-select-sm mb-1">
+                                    <option value="benefit" {% if data['types'][loop.index0] == 'benefit' %}selected{% endif %}>Benefit</option>
+                                    <option value="cost" {% if data['types'][loop.index0] == 'cost' %}selected{% endif %}>Cost</option>
+                                </select>
+                                <input type="number" name="weights[]" value="{{ data['weights'][loop.index0] }}" step="any" class="form-control form-control-sm text-center" placeholder="Bobot" required>
+                            </th>
+                            {% endfor %}
+                            
+                            <th id="actionHeader" style="width: 80px;" class="text-dark text-center align-middle fw-bold">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matrixBody">
+                        {% for alt in data['alternatives'] %}
+                        {% set row_idx = loop.index0 %}
+                        <tr>
+                            <td>
+                                <input type="text" name="alternatives[]" value="{{ alt }}" class="form-control form-control-sm fw-bold text-center" required>
+                            </td>
+                            {% for c in data['criteria'] %}
+                            <td>
+                                <input type="number" name="perf[]" value="{{ data['performance'][row_idx][loop.index0] }}" step="any" class="form-control form-control-sm text-center" required>
+                            </td>
+                            {% endfor %}
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteAlternative(this)"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-success px-4 shadow-sm"><i class="fa-solid fa-floppy-disk me-1"></i> Simpan Konfigurasi</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    function handleWeightMethodChange() {
+        const method = document.getElementById('weightMethodSelect').value;
+        const inputs = document.getElementsByName('weights[]');
+        
+        for (let i = 0; i < inputs.length; i++) {
+            if (method === 'equal') {
+                inputs[i].value = (100 / inputs.length).toFixed(1);
+                inputs[i].readOnly = true;
+                inputs[i].className = "form-control form-control-sm text-center bg-light text-muted";
+            } else if (method === 'roc') {
+                inputs[i].readOnly = false;
+                inputs[i].type = "number";
+                inputs[i].min = "1";
+                inputs[i].max = inputs.length.toString();
+                inputs[i].className = "form-control form-control-sm text-center bg-white text-dark fw-bold border-warning";
+                if(inputs[i].value == "" || inputs[i].value == "0") inputs[i].value = (i + 1);
+            } else {
+                inputs[i].readOnly = false;
+                inputs[i].type = "number";
+                inputs[i].min = "0";
+                inputs[i].max = "";
+                inputs[i].className = "form-control form-control-sm text-center bg-white text-dark";
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        handleWeightMethodChange();
+    });
+
+    function addCriterion() {
+        const headerRow = document.getElementById('headerRow');
+        const actionHeader = document.getElementById('actionHeader');
+        
+        const newTh = document.createElement('th');
+        newTh.className = "position-relative pt-4";
+        newTh.innerHTML = `
+            <button type="button" class="btn btn-sm text-danger position-absolute top-0 end-0 p-1" onclick="deleteCriterion(this)"><i class="fa-solid fa-trash-can"></i></button>
+            <input type="text" name="criteria[]" value="Kriteria Baru" class="form-control form-control-sm text-center fw-bold mb-1" required>
+            <select name="types[]" class="form-select form-select-sm mb-1">
+                <option value="benefit">Benefit</option>
+                <option value="cost">Cost</option>
+            </select>
+            <input type="number" name="weights[]" value="10" step="any" class="form-control form-control-sm text-center" required>
+        `;
+        headerRow.insertBefore(newTh, actionHeader);
+
+        const tbody = document.getElementById('matrixBody');
+        for (let row of tbody.rows) {
+            const newTd = document.createElement('td');
+            newTd.innerHTML = '<input type="number" name="perf[]" value="0" step="any" class="form-control form-control-sm text-center" required>';
+            row.insertBefore(newTd, row.cells[row.cells.length - 1]);
+        }
+        handleWeightMethodChange(); 
+    }
+
+    function addAlternative() {
+        const tbody = document.getElementById('matrixBody');
+        const headerRow = document.getElementById('headerRow');
+        const criteriaCount = headerRow.cells.length - 2; 
+        
+        const newRow = document.createElement('tr');
+        let htmlContent = `<td><input type="text" name="alternatives[]" value="Alternatif Baru" class="form-control form-control-sm fw-bold text-center" required></td>`;
+        for (let i = 0; i < criteriaCount; i++) {
+            htmlContent += `<td><input type="number" name="perf[]" value="0" step="any" class="form-control form-control-sm text-center" required></td>`;
+        }
+        htmlContent += `<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteAlternative(this)"><i class="fa-solid fa-trash"></i></button></td>`;
+        newRow.innerHTML = htmlContent;
+        tbody.appendChild(newRow);
+    }
+
+    function deleteCriterion(btn) {
+        if(confirm("Hapus kriteria ini?")) {
+            const th = btn.closest('th');
+            const index = th.cellIndex; 
+            th.remove(); 
+            const tbody = document.getElementById('matrixBody');
+            for (let row of tbody.rows) {
+                if (row.cells[index]) row.cells[index].remove(); 
+            }
+            handleWeightMethodChange(); 
+        }
+    }
+
+    function deleteAlternative(btn) {
+        if(confirm("Hapus alternatif ini?")) {
+            btn.closest('tr').remove(); 
+        }
+    }
+</script>
+{% endblock %}

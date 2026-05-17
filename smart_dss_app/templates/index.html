@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-6">
+        <h2 class="text-secondary mb-1">🗂️ Manajemen Studi Kasus SPK</h2>
+        <p class="text-muted text-sm">Kelola berbagai studi kasus keputusan metode SMART.</p>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+            <i class="fa-solid fa-plus me-1"></i> Buat Kasus Baru
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    {% for p in projects %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 p-3">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title text-primary"><i class="fa-regular fa-folder-open me-2"></i>{{ p.name }}</h5>
+                <p class="card-text text-muted flex-grow-1">{{ p.description or 'Tidak ada deskripsi.' }}</p>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="/project/{{ p.id }}" class="btn btn-outline-primary btn-sm">Buka Data <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                    <a href="/project/{{ p.id }}/delete" class="text-danger" onclick="return confirm('Hapus proyek ini?')"><i class="fa-solid fa-trash"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5">
+        <div class="text-muted"><i class="fa-solid fa-inbox fa-3x mb-3"></i><br>Belum ada kasus terdaftar. Silakan buat baru!</div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="modal fade" id="newProjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/project/create" method="POST" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tambah Kasus Keputusan Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Nama Proyek/Kasus</label>
+                    <input type="text" name="name" class="form-control" placeholder="Contoh: Seleksi Vendor SIAKAD" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Deskripsi</label>
+                    <textarea name="description" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-success">Simpan Proyek</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
