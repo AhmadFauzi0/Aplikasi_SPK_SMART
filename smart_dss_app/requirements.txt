@@ -1,0 +1,6 @@
+Flask
+SQLAlchemy
+numpy
+pandas
+openpyxl
+matplotlib
